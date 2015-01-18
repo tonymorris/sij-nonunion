@@ -1,6 +1,8 @@
 #!/usr/bin/env runhaskell
 
--- depends on /usr/bin/convert
+-- depends
+--   /usr/bin/convert
+--   /usr/bin/ffmpeg
 
 import Data.List
 import System.Directory
@@ -99,13 +101,38 @@ f !.~> n =
 (!!~>) f r =
   unwords (map (f !.~>) r)
 
+name ::
+  String
+name =
+  "20140818-CAT"
+
+run ::
+  String
+  -> IO ExitCode
+run a =
+  do putStrLn a
+     system a
+
+(->-) ::
+  IO ExitCode
+  -> IO a
+  -> IO a
+a ->- b =
+  do e <- a
+     if e == ExitSuccess
+       then
+         b
+       else
+         exitWith e
 main ::
   IO ()
 main =
   let dist =
         "dist"
       out =
-        "\"" ++ dist </> "20140818-CAT.gif\""
+        "\"" ++ dist </> name ++ ".gif\""
+      mp4 =
+        "ffmpeg -f gif -i \"" ++ dist </> name ++ ".gif\" \"" ++ dist </> name ++ ".mp4\""
       r =
         unwords
           [
@@ -132,7 +159,6 @@ main =
           , "image" </> "blank.jpg"
           , out
           ]
-  in do createDirectoryIfMissing True dist
-        putStrLn r
-        e <- system r
+  in do createDirectoryIfMissing True dist        
+        e <- run r ->- run mp4
         exitWith e
